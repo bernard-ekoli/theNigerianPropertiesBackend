@@ -5,13 +5,16 @@ import listingRoute from './routes/userlisting.js'
 import connectDB from "./db.js";
 import cookieParser from "cookie-parser";
 import cors from "cors"
+import dotenv from "dotenv"
+
+dotenv.config()
 
 const app = express()
 connectDB()
 app.use(express.json())
 app.use(cookieParser())
 app.use(cors({
-    origin: "http://localhost:3000",
+    origin: "https://thenigerianpropertiesbackend.onrender.com",
     credentials: true
 }))
 app.use("/api/users", userRoute);
@@ -20,7 +23,7 @@ app.use("/api/listing", listingRoute)
 app.get('/', (req, res) => {
     return res.send("Route is working successfully")
 })
-const PORT = 5000
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-    console.log(`Nodejs server running on http://localhost:${PORT}`)
+    console.log(`Nodejs server running`)
 })

@@ -18,8 +18,7 @@ app.use("/api/users", userRoute);
 app.use("/api/prices", pricesRoute)
 app.use("/api/listing", listingRoute)
 app.get('/', (req, res) => {
-    console.log("from the real route")
-    return
+    return res.send("Route is working successfully")
 })
 const PORT = 5000
 app.listen(PORT, () => {

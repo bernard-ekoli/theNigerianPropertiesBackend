@@ -1,10 +1,6 @@
 import multer from "multer";
-import pkg from "multer-storage-cloudinary";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
 import cloudinary from "../cloudinary.js";
-
-// Try every possible hiding spot for the constructor
-const CloudinaryStorage = pkg.CloudinaryStorage || (pkg.default && pkg.default.CloudinaryStorage) || pkg.default || pkg;
-
 
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
@@ -15,4 +11,5 @@ const storage = new CloudinaryStorage({
 });
 
 const upload = multer({ storage });
+
 export default upload;

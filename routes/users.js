@@ -35,21 +35,8 @@ router.post("/login", async (req, res) => {
                 message: "Invalid credentials",
             })
         }
-
-        const token = jwt.sign(
-            { userId: existingUser._id },
-            process.env.JWT_SECRET,
-            { expiresIn: "24h" }
-        )
-
-        res.cookie("token", token, {
-            httpOnly: true,
-            secure: true,
-            sameSite: "none",
-            path: "/",
-        })
-
-        return res.status(200).json({ success: true })
+        const { existingUserpassword, ...userWithoutPassword } = existingUser.toObject();
+        return res.status(200).json({ success: true, user: userWithoutPassword })
     } catch (error) {
         console.error("Login error:", error)
         return res.status(500).json({
@@ -131,12 +118,28 @@ router.get('/', async (req, res) => {
         })
     } catch (error) {
         console.log(error)
-        return res.json({
+        return res.status(400).json({
             success: false,
             message: "An error occured while fetching user info"
         })
     }
 })
+router.get('/public-info', async (req, res) => {
+    try {
+        const agentId = req.query.agentId;
+        const user = await User.findOne({ _id: agentId }).lean();
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            })
+        }
+        return res.status(200).json({ email: user.email, phone: user.phone, firstName: user.firstName, lastName: user.lastName });
+    } catch (error) {
+
+    }
+});
+
 router.post('/edit-user-details', async (req, res) => {
     const token = req.cookies?.token;
     if (!token) return res.status(401).json({ error: "No token provided" });
@@ -145,7 +148,6 @@ router.post('/edit-user-details', async (req, res) => {
     const { firstName, lastName, phone } = req.body ?? {};
     if (!firstName) missing.push('firstName');
     if (!lastName) missing.push('lastName');
-    if (!phone) missing.push('phone');
     if (missing.length > 0) return res.status(400).json({ success: false, message: `Missing: ${missing.join(", ")}` });
 
     try {
@@ -156,8 +158,8 @@ router.post('/edit-user-details', async (req, res) => {
             { $set: { firstName, lastName, phone } },
             { new: true, runValidators: true, lean: true }
         );
-
-        return res.status(200).json({ success: true, updatedUser });
+        const { password, ...rest } = updatedUser
+        return res.status(200).json({ success: true, rest });
     } catch (error) {
         console.error(error);
         return res.status(500).json({ success: false, message: "An error occurred while editing user info" });

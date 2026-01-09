@@ -5,8 +5,26 @@ import upload from "./upload.js"
 import cloudinary from "../cloudinary.js"
 
 const router = express.Router()
-
-router.post("/create-listing", upload.array("images", 5), async (req, res) => {
+router.get("/", async (req, res) => {
+    try {
+        const listings = await Listing.find({ featured: true }).limit(10);
+        res.status(200).json({ listings })
+    } catch (error) {
+        console.error("Error fetching featured listings:", error)
+        res.status(500).json({ message: "Internal Server Error" })
+    }
+})
+router.get("/get-property", async (req, res) => {
+    try {
+        const id = req.query.id;
+        const listing = await Listing.findById(id);
+        res.status(200).json({ listing })
+    } catch (error) {
+        console.error("Error fetching featured listing:", error)
+        res.status(500).json({ message: "Internal Server Error" })
+    }
+})
+router.post("/create-listing", upload.array("images", 10), async (req, res) => {
 
     let uploadedImages = [] // 👈 TRACK UPLOADED FILES
 
@@ -62,6 +80,7 @@ router.post("/create-listing", upload.array("images", 5), async (req, res) => {
             sqft: body.sqft,
             type: body.type,
             listingType: body.listingType,
+            featured: body.featured || false,
             duration: body.duration,
             images: imageArray,
             userId
@@ -69,7 +88,6 @@ router.post("/create-listing", upload.array("images", 5), async (req, res) => {
 
         const listing = new Listing(listingData)
         await listing.save()
-
         return res.status(200).json({
             success: true,
             message: "Listing Created"

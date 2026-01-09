@@ -13,6 +13,9 @@ const listingSchema = new mongoose.Schema({
     baths: { type: Number, required: true },
     sqft: { type: Number, required: true },
     price: { type: String, required: true },
+    description: { type: String, required: true },
+    type: { type: String, enum: ['apartment', 'house', 'condo', 'townhouse'], required: true },
+    featured: { type: Boolean, default: false },
     listingType: { type: String, enum: ['sale', 'rent', 'lease'], required: true },
     views: { type: Number, default: 0 },
     images: [
@@ -24,6 +27,16 @@ const listingSchema = new mongoose.Schema({
     // You don't need 'earnings' or 'expiresAt' if you manage expiration differently, 
     // but based on your code, you should include them:
     expiresAt: { type: Date },
+    expired: { type: Boolean, default: false },
+    messages: [
+        {
+            name: String,
+            email: String,
+            phone: String,
+            message: String,
+            date: { type: Date, default: Date.now },
+        },
+    ],
 }, {
     timestamps: true // Automatically adds createdAt and updatedAt
 });

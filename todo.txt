@@ -1,0 +1,3 @@
+1. Work on pending users listing meaning update the listing to add status active or pending and confirm how it looks like in users dashboard
+as listing can be active, pending, declined and delete listng statue activation from other routes so
+only admin has the power to activate then once payments confirms, add to user dashboard after successful listing creation that listing sent to admin for approval

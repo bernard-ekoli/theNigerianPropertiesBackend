@@ -9,25 +9,42 @@ const router = express.Router()
 
 
 router.get("/all_users", async (req, res) => {
-    const auth = getUserFromCookie(req)
+    const auth = getUserFromCookie(req);
+
     if (!auth.success) {
-        return res.status(404).json(auth)
+        return res.status(404).json(auth);
     }
+
     if (auth.user.role !== "admin") {
-        console.log("You aint an admin bruh")
         return res.status(403).json({
             success: false,
-            message: "Admins only"
+            message: "Admins only",
         });
     }
+
     try {
-        const users = await User.find({}).select("-password")
-        return res.status(200).json({ success: true, users })
+        const users = await User.find({}).select("-password").lean();
+
+        const usersWithCounts = await Promise.all(
+            users.map(async (user) => ({
+                ...user,
+                listingsCount: await Listing.countDocuments({
+                    userId: user._id,
+                }),
+            }))
+        );
+
+        return res.status(200).json({
+            success: true,
+            users: usersWithCounts,
+        });
     } catch (error) {
-        return res.status(400).json({ success: false, error })
-        console.log(error)
+        return res.status(400).json({
+            success: false,
+            error: error.message,
+        });
     }
-})
+});
 
 
 router.get("/all_listings", async (req, res) => {
@@ -86,7 +103,7 @@ router.patch("/listing_review", async (req, res) => {
             "global",
             { review: reviewMode },
             { new: true, upsert: true }
-            ).select("-_id -__v")
+        ).select("-_id -__v")
 
         return res.status(200).json({
             success: true,
@@ -120,17 +137,15 @@ router.delete("/delete_listing", (req, res) => {
         });
     }
 
-    try{
-        
+    try {
 
-    }catch(err){
+
+    } catch (err) {
         return res.status(500).json({
             success: false,
             error: error.message
         });
     }
 })
-
-
 
 export default router

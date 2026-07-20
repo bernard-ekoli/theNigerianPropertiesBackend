@@ -38,7 +38,7 @@ router.post("/login", async (req, res) => {
             { id: existingUser._id, email: existingUser.email, role: existingUser.role },
             process.env.JWT_SECRET,
             { expiresIn: "7d" }
-            )
+        )
 
         // 2. Set cookie
         res.cookie("token", token, {
@@ -72,76 +72,79 @@ router.post('/signup', async (req, res) => {
 
         const missing = []
         const body = req.body
-        const { firstName, lastName, email, password } = body ?? {};
+        const { firstName, lastName, email, phone, password } = body ?? {};
 
         const trimmedEmail = email?.trim().toLowerCase();
         const trimmedFirst = firstName?.trim();
         const trimmedLast = lastName?.trim();
+        const trimmedPhone = phone?.trim();
 
         if (!trimmedFirst) missing.push('firstName')
-            if (!trimmedLast) missing.push('lastName')
-                if (!trimmedEmail) missing.push('email')
-                    if (!password) missing.push('password')
-                        if (missing.length > 0) {
-                            return res.status(400).json({
-                                success: false,
-                                message: `Missing field: ${missing.join(", ")}`
-                            })
-                        }
+        if (!trimmedLast) missing.push('lastName')
+        if (!trimmedEmail) missing.push('email')
+        if (!password) missing.push('password')
+        if (!phone) missing.push('phone')
+        if (missing.length > 0) {
+            return res.status(400).json({
+                success: false,
+                message: `Missing field: ${missing.join(", ")}`
+            })
+        }
 
-                        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                        if (!emailRegex.test(trimmedEmail)) {
-                            return res.status(400).json({ success: false, message: "Invalid email format" });
-                        }
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(trimmedEmail)) {
+            return res.status(400).json({ success: false, message: "Invalid email format" });
+        }
 
-                        if (password.length < 8) {
-                            return res.status(400).json({ success: false, message: "Password must be at least 8 characters" });
-                        }
+        if (password.length < 8) {
+            return res.status(400).json({ success: false, message: "Password must be at least 8 characters" });
+        }
 
-                        const existingUser = await User.findOne({ email: trimmedEmail });
-                        if (existingUser) {
-                            return res.status(400).json({
-                                success: false,
-                                message: "Email already registered"
-                            })
-                        }
+        const existingUser = await User.findOne({ email: trimmedEmail });
+        if (existingUser) {
+            return res.status(400).json({
+                success: false,
+                message: "Email already registered"
+            })
+        }
 
-                        const hashedPassword = await bcrypt.hash(password, 12);
-                        const user = new User({
-                            firstName: trimmedFirst,
-                            lastName: trimmedLast,
-                            email: trimmedEmail,
-                            password: hashedPassword,
-                        })
-                        const newUser = await user.save()
+        const hashedPassword = await bcrypt.hash(password, 12);
+        const user = new User({
+            firstName: trimmedFirst,
+            lastName: trimmedLast,
+            email: trimmedEmail,
+            phone: trimmedPhone,
+            password: hashedPassword,
+        })
+        const newUser = await user.save()
 
-                        const token = jwt.sign(
-                            { id: newUser._id, email: newUser.email },
-                            process.env.JWT_SECRET,
-                            { expiresIn: "7d" }
-                            )
+        const token = jwt.sign(
+            { id: newUser._id, email: newUser.email },
+            process.env.JWT_SECRET,
+            { expiresIn: "7d" }
+        )
 
-                        res.cookie("token", token, {
-                            httpOnly: true,
-                            secure: true,
-                            sameSite: "None",
-                            maxAge: 7 * 24 * 60 * 60 * 1000,
-                        })
+        res.cookie("token", token, {
+            httpOnly: true,
+            secure: true,
+            sameSite: "None",
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+        })
 
-                        const { password: _, ...userWithoutPassword } = newUser.toObject();
-                        return res.status(201).json({
-                            success: true,
-                            user: userWithoutPassword,
-                        })
+        const { password: _, ...userWithoutPassword } = newUser.toObject();
+        return res.status(201).json({
+            success: true,
+            user: userWithoutPassword,
+        })
 
-                    } catch (error) {
-                        console.log("An Error Occured during the Signup process", error)
-                        return res.status(500).json({
-                            success: false,
-                            message: "Server error",
-                        })
-                    }
-                })
+    } catch (error) {
+        console.log("An Error Occured during the Signup process", error)
+        return res.status(500).json({
+            success: false,
+            message: "Server error",
+        })
+    }
+})
 
 router.post("/logout", (req, res) => {
     res.clearCookie("token", {
@@ -158,14 +161,14 @@ router.get('/me', async (req, res) => {
         if (!token) return res.status(401).json({ success: false })
 
         // 👇 actually verify the JWT
-            const decoded = jwt.verify(token, process.env.JWT_SECRET)
+        const decoded = jwt.verify(token, process.env.JWT_SECRET)
 
         // 👇 fetch the actual user from DB
         const user = await User.findById(decoded.id).select("-password")
         if (!user) return res.status(401).json({ success: false })
 
-            return res.status(200).json({
-                success: true,
+        return res.status(200).json({
+            success: true,
             user, // 👈 send back user data so your dashboard can use it
         })
     } catch (error) {
@@ -245,7 +248,7 @@ router.post('/edit-user-details', async (req, res) => {
             { _id: decoded.id },
             { $set: updateFields },
             { new: true, runValidators: true, lean: true }
-            );
+        );
         const { password, ...rest } = updatedUser
         return res.status(200).json({ success: true, rest });
     } catch (error) {

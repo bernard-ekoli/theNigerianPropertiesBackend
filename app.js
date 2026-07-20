@@ -16,6 +16,7 @@ import sendagentmessageRoute from "./routes/send-agent-message.js";
 import cloudinaryRoutes from "./routes/cloudinarySignature.js";
 import pay from "./routes/payments.js";
 import adminRoute from './routes/admin.js'
+import otpRoute from './routes/otp.js'
 
 // Better DNS fallback (helps MongoDB Atlas in some networks)
 dns.setServers(["8.8.8.8", "1.1.1.1"]);
@@ -55,6 +56,7 @@ app.use("/api/send-agent-message", sendagentmessageRoute);
 app.use("/api/cloudinary", cloudinaryRoutes);
 app.use("/api/payment", pay);
 app.use("/api/admin", adminRoute);
+app.use("/api/otp-request", otpRoute)
 // Test route
 app.get("/", (req, res) => {
   res.send("Route is working successfully");

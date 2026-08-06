@@ -13,7 +13,7 @@ async function sendOTPEmail(to, otp) {
     from: `"TheNigerianProperties" <${process.env.GMAIL_USER}>`,
     to,
     subject: 'Your verification code',
-    text: `Your OTP is ${otp}. It expires in 10 minutes. Do not share this code.`,
+    text: `Your OTP is ${otp}. It expires in 10 minutes. Do not share this code. If you did not ask for this code just ignore this message.`,
   });
 }
 

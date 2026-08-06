@@ -2,6 +2,8 @@ import express from "express"
 import jwt from "jsonwebtoken"
 import Listing from "../schemas/listings.js"
 import cloudinary from "../cloudinary.js"
+import User from "../schemas/users.js"
+import Settings from "../schemas/settings.js"
 
 const router = express.Router()
 router.get("/", async (req, res) => {
@@ -45,7 +47,6 @@ router.get("/get-property", async (req, res) => {
         res.status(500).json({ message: "Internal Server Error" })
     }
 })
-
 router.post("/create-listing", async (req, res) => {
     try {
         const requiredFields = [
@@ -54,9 +55,8 @@ router.post("/create-listing", async (req, res) => {
         ];
 
         const missing = requiredFields.filter(field =>
-            !req.body[field] || req.body[field].trim() === ""
+            !req.body[field] || req.body[field].toString().trim() === ""
         );
-
 
         if (missing.length > 0) {
             return res.status(400).json({
@@ -71,7 +71,16 @@ router.post("/create-listing", async (req, res) => {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         const userId = decoded.id;
 
-        // Calculate expiration
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(401).json({ success: false, message: "User not found" });
+        }
+
+        const settings = await Settings.findById("global");
+        const freeListingsEnabled = settings?.toggleFreeListing === "yes";
+        const isAdmin = user.role === "admin";
+        const isFree = isAdmin || freeListingsEnabled;
+
         const now = new Date();
         const durationDays = parseInt(req.body.duration) || 0;
         const expiresAt = new Date(now.getTime() + durationDays * 24 * 60 * 60 * 1000);
@@ -91,18 +100,18 @@ router.post("/create-listing", async (req, res) => {
             expiresAt,
             images: req.body.images,
             userId,
-            status: 'pending'
+            status: isFree ? 'active' : 'pending'
         };
 
         const listing = new Listing(listingData);
         const savedListing = await listing.save();
-        console.log("Saved listing: ", savedListing)
 
         return res.status(200).json({
             success: true,
-            message: "Listing Created",
+            message: isFree ? "Listing Created and Published" : "Listing Created",
             data: {
                 listingId: savedListing._id,
+                requiresPayment: !isFree
             }
         });
 
